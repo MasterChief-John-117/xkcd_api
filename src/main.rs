@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
             println!("Latest Stored Comic: {}", latest_stored_comic_id);
 
             if latest_stored_comic_id < latest_comic_id {
-                for next_id in (latest_stored_comic_id+1)..latest_comic_id {
+                for next_id in (latest_stored_comic_id+1)..(latest_comic_id+1) {
                     println!("Fetching {}", next_id);
                     let next_comic: xkcd::Comic = xkcd::get_by_id(next_id);
                     println!("{:?}", next_comic);
