@@ -1,7 +1,6 @@
 use std::thread;
 use std::time::{Duration};
 use actix_web::{http, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use serde_json::json;
 mod sqlite_chef;
 mod xkcd;
 
