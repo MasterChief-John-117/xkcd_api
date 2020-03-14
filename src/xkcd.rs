@@ -57,9 +57,9 @@ pub fn get_by_id(id: i32) -> Comic {
                     if body_content.contains("404 Not Found") {
                         return Comic {
                             num: 404,
-                            title: String::from("404"),
-                            alt_text: String::from("404 Not Found"),
-                            transcript: String::from("The comic for this day is just a 404 page"),
+                            title: normalize("404"),
+                            alt_text: normalize("404 Not Found"),
+                            transcript: normalize("The comic for this day is just a 404 page"),
                             img: String::from("https://xkcd.com/s/0b7742.png"),
                             year: 2008,
                             month: 4,
@@ -73,9 +73,9 @@ pub fn get_by_id(id: i32) -> Comic {
             };
             return Comic {
                 num: latest_comic.num,
-                title: latest_comic.safe_title,
-                alt_text: latest_comic.alt,
-                transcript: latest_comic.transcript,
+                title: normalize(&latest_comic.safe_title),
+                alt_text: normalize(&latest_comic.alt),
+                transcript: normalize(&latest_comic.transcript),
                 img: latest_comic.img,
                 year: latest_comic.year.parse::<i32>().unwrap(),
                 month: latest_comic.month.parse::<i32>().unwrap(),
@@ -86,4 +86,17 @@ pub fn get_by_id(id: i32) -> Comic {
             panic!("Error with comic {}: {}", id, msg);
         }
     }
+}
+
+pub fn normalize(input: &str) -> String {
+    let mut normal = String::new();
+    let approved_chars = String::from("abcdefghijklmnopqrstuvwxyz1234567890 ");
+
+    for c in input.to_lowercase().chars() {
+        if approved_chars.contains(c) {
+            normal.push(c);
+        }
+    }
+
+    return normal;
 }
