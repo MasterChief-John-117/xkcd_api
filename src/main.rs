@@ -38,6 +38,23 @@ async fn id(req: HttpRequest) -> impl Responder {
     }
 }
 
+async fn title(req: HttpRequest) -> impl Responder {
+    match req.match_info().get("title") {
+        Some(title_str) => {
+            let mut matching_scs = sqlite_chef::get_search_comics();
+            matching_scs.retain(|element| element.title.contains(&xkcd::normalize(&title_str)));
+            let mut ids: Vec<i32> = Vec::<i32>::new();
+            for scomic in matching_scs {
+                ids.push(scomic.num);
+            }
+            HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(sqlite_chef::get_comics_by_ids(ids))
+        },
+        None => {
+            HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse title\"}")
+        }
+    }
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     sqlite_chef::ensure_tables();
@@ -71,6 +88,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/", web::get().to(index))
             .route("/id/{id}", web::get().to(id))
+            .route("/title/{title}", web::get().to(title))
     })
     .bind("127.0.0.1:8888")?
     .run()
