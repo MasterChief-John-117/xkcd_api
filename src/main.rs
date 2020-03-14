@@ -39,7 +39,7 @@ async fn id(req: HttpRequest) -> impl Responder {
 }
 
 async fn title(req: HttpRequest) -> impl Responder {
-    match req.match_info().get("title") {
+    match req.match_info().get("query") {
         Some(title_str) => {
             let mut matching_scs = sqlite_chef::get_search_comics();
             matching_scs.retain(|element| element.title.contains(&xkcd::normalize(&title_str)));
@@ -51,6 +51,40 @@ async fn title(req: HttpRequest) -> impl Responder {
         },
         None => {
             HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse title\"}")
+        }
+    }
+}
+
+async fn alt(req: HttpRequest) -> impl Responder {
+    match req.match_info().get("query") {
+        Some(alt_str) => {
+            let mut matching_scs = sqlite_chef::get_search_comics();
+            matching_scs.retain(|element| element.alt_text.contains(&xkcd::normalize(&alt_str)));
+            let mut ids: Vec<i32> = Vec::<i32>::new();
+            for scomic in matching_scs {
+                ids.push(scomic.num);
+            }
+            HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(sqlite_chef::get_comics_by_ids(ids))
+        },
+        None => {
+            HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse alt\"}")
+        }
+    }
+}
+
+async fn transcript(req: HttpRequest) -> impl Responder {
+    match req.match_info().get("query") {
+        Some(trans_str) => {
+            let mut matching_scs = sqlite_chef::get_search_comics();
+            matching_scs.retain(|element| element.transcript.contains(&xkcd::normalize(&trans_str)));
+            let mut ids: Vec<i32> = Vec::<i32>::new();
+            for scomic in matching_scs {
+                ids.push(scomic.num);
+            }
+            HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(sqlite_chef::get_comics_by_ids(ids))
+        },
+        None => {
+            HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse transcript\"}")
         }
     }
 }
@@ -88,7 +122,9 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/", web::get().to(index))
             .route("/id/{id}", web::get().to(id))
-            .route("/title/{title}", web::get().to(title))
+            .route("/title/{query}", web::get().to(title))
+            .route("/alt/{query}", web::get().to(alt))
+            .route("/transcript/{query}", web::get().to(transcript))
     })
     .bind("127.0.0.1:8888")?
     .run()
