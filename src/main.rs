@@ -1,12 +1,37 @@
 use std::thread;
 use std::time::{Duration};
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-
+use actix_web::{http, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use serde_json::json;
 mod sqlite_chef;
 mod xkcd;
 
 async fn index() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
+}
+
+async fn id(req: HttpRequest) -> impl Responder {
+    match req.match_info().get("id") {
+        Some(id_str) => {
+            match id_str.parse::<i32>() {
+                Ok(request_id) => {
+                    if request_id > sqlite_chef::get_latest() {
+                        HttpResponse::NotFound().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"id higher than existing xkcd comics\"}")
+                    }
+                    else {
+                        let mut matching = sqlite_chef::get_all();
+                        matching.retain(|element| element.num == request_id);
+                        HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(matching)                    
+                    }
+                },
+                Err(_) => {
+                    HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse id\"}")
+                }
+            }
+        },
+        None => {
+            HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse id\"}")
+        }
+    }
 }
 
 #[actix_rt::main]
@@ -36,11 +61,12 @@ async fn main() -> std::io::Result<()> {
             thread::sleep(Duration::from_secs(60 * 30)); // 30 minutes
         }
     });
-    
-    
+
+
     HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(index))
+            .route("/{id}", web::get().to(id))
     })
     .bind("127.0.0.1:8888")?
     .run()
