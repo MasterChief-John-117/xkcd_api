@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use super::xkcd;
 use sqlite::State;
 
-pub fn get_latest()  -> i32 {
+pub fn get_latest() -> i32 {
     let connection = sqlite::open("./xkcd.db").unwrap();
      let mut statement = match connection.prepare("SELECT MAX(num) FROM comics WHERE num > ?") {
         Ok(obj) => obj,
@@ -22,6 +22,38 @@ pub fn get_latest()  -> i32 {
         return statement.read::<i64>(0).unwrap().try_into().unwrap();
     }
     return 0;
+}
+
+pub fn get_all() -> Vec<xkcd::Comic> {
+    let mut comics: Vec<xkcd::Comic> = Vec::<xkcd::Comic>::new();
+    let connection = sqlite::open("./xkcd.db").unwrap();
+    let mut statement = match connection.prepare("SELECT * FROM comics WHERE num > ?") {
+        Ok(obj) => obj,
+        Err(_) => {
+            return comics;
+        }
+    };
+    
+    match statement.bind(1, 0) {
+        Ok(_) => (),
+        Err(_) => {
+            return comics;
+        }
+    }
+    
+    while let State::Row = statement.next().unwrap() {
+        comics.push(xkcd::Comic {
+            num: statement.read::<i64>(0).unwrap().try_into().unwrap(),
+            title: statement.read(1).unwrap(),
+            alt_text: statement.read(2).unwrap(),
+            transcript: statement.read(3).unwrap(),
+            img: statement.read(4).unwrap(),
+            year: statement.read::<i64>(5).unwrap().try_into().unwrap(),
+            month: statement.read::<i64>(6).unwrap().try_into().unwrap(),
+            day: statement.read::<i64>(7).unwrap().try_into().unwrap(),
+        })
+    }
+    return comics;
 }
 
 pub fn insert_comic(comic: xkcd::Comic) {
@@ -45,7 +77,7 @@ pub fn ensure_tables() {
                   img             TEXT,
                   year            INTEGER,
                   month           INTEGER,
-                  day             INTEGERL
+                  day             INTEGER
                   )"
     ) {
         Ok(_) => {},
