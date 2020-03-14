@@ -11,11 +11,22 @@ async fn index() -> impl Responder {
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    sqlite_chef::ensure_tables();
+
     // Create database update thread
     thread::spawn(|| {
         loop {
-            let latest_comic: xkcd::Comic = xkcd::get_latest();
-            println!("Latest Comic: {}: {}", latest_comic.num, latest_comic.title);
+            let latest_comic_id: i32 = xkcd::get_latest().num;
+            let latest_stored_comic_id: i32 = sqlite_chef::get_latest();
+
+            println!("Latest Comic: {}", latest_comic_id);
+            println!("Latest Stored Comic: {}", latest_stored_comic_id);
+
+            if latest_stored_comic_id < latest_comic_id {
+                for next_id in latest_stored_comic_id..latest_comic_id {
+                    println!("Fetching {}", next_id);
+                }
+            }
             // After running the update, sleep for 30 seconds
             thread::sleep(Duration::from_secs(60 * 30)); // 30 minutes
         }
