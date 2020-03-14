@@ -13,11 +13,11 @@ async fn id(req: HttpRequest) -> impl Responder {
         Some(id_str) => {
             match id_str.parse::<i32>() {
                 Ok(request_id) => {
-                    if request_id > sqlite_chef::get_latest() {
+                    if request_id > sqlite_chef::get_latest_id() {
                         HttpResponse::NotFound().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"id higher than existing xkcd comics\"}")
                     }
                     else {
-                        let mut matching = sqlite_chef::get_all();
+                        let mut matching = sqlite_chef::get_all_comics();
                         matching.retain(|element| element.num == request_id);
                         HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(matching)                    
                     }
@@ -40,8 +40,8 @@ async fn main() -> std::io::Result<()> {
     // Create database update thread
     thread::spawn(|| {
         loop {
-            let latest_comic_id: i32 = xkcd::get_latest().num;
-            let latest_stored_comic_id: i32 = sqlite_chef::get_latest();
+            let latest_comic_id: i32 = xkcd::get_latest_comic().num;
+            let latest_stored_comic_id: i32 = sqlite_chef::get_latest_id();
 
             println!("Latest Comic: {}", latest_comic_id);
             println!("Latest Stored Comic: {}", latest_stored_comic_id);
@@ -49,9 +49,9 @@ async fn main() -> std::io::Result<()> {
             if latest_stored_comic_id < latest_comic_id {
                 for next_id in (latest_stored_comic_id+1)..(latest_comic_id+1) {
                     println!("Fetching {}", next_id);
-                    let next_comic: xkcd::Comic = xkcd::get_by_id(next_id);
+                    let next_comic: xkcd::Comic = xkcd::get_comic_by_id(next_id);
                     println!("{:?}", next_comic);
-                    sqlite_chef::insert_comic(next_comic);
+                    sqlite_chef::insert_comic_both(next_comic);
                     println!("Inserted {}", next_id);
                     thread::sleep(Duration::from_secs(1)); // Wait a second so we don't hammer xkcd
                 }

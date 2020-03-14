@@ -16,6 +16,13 @@ pub struct Comic {
     pub day: i32,
 }
 #[derive(Serialize, Deserialize, Debug)]
+pub struct SearchComic {
+    pub num: i32,
+    pub title: String,
+    pub alt_text: String,
+    pub transcript: String,
+}
+#[derive(Serialize, Deserialize, Debug)]
 struct ApiComic {
     pub num: i32,
     pub safe_title: String,
@@ -27,7 +34,7 @@ struct ApiComic {
     pub day: String,
 }
 
-pub fn get_latest() -> Comic {
+pub fn get_latest_comic() -> Comic {
     let (_response_meta, body) = CallBuilder::get().timeout_ms(5000).url("https://xkcd.com/info.0.json").unwrap().exec().unwrap();
 
     let latest_comic: ApiComic = serde_json::from_str(&String::from_utf8(body).unwrap()).unwrap();
@@ -44,7 +51,7 @@ pub fn get_latest() -> Comic {
     }
 }
 
-pub fn get_by_id(id: i32) -> Comic {
+pub fn get_comic_by_id(id: i32) -> Comic {
     match CallBuilder::get().timeout_ms(5000).url(&(format!("https://xkcd.com/{}/info.0.json", id))).unwrap().exec() {
         Ok((_response_meta, body)) => {
             let body_content = match String::from_utf8(body) {
@@ -57,9 +64,9 @@ pub fn get_by_id(id: i32) -> Comic {
                     if body_content.contains("404 Not Found") {
                         return Comic {
                             num: 404,
-                            title: normalize("404"),
-                            alt_text: normalize("404 Not Found"),
-                            transcript: normalize("The comic for this day is just a 404 page"),
+                            title: String::from("404"),
+                            alt_text: String::from("404 Not Found"),
+                            transcript: String::from("The comic for this day is just a 404 page"),
                             img: String::from("https://xkcd.com/s/0b7742.png"),
                             year: 2008,
                             month: 4,
@@ -73,9 +80,9 @@ pub fn get_by_id(id: i32) -> Comic {
             };
             return Comic {
                 num: latest_comic.num,
-                title: normalize(&latest_comic.safe_title),
-                alt_text: normalize(&latest_comic.alt),
-                transcript: normalize(&latest_comic.transcript),
+                title: latest_comic.safe_title,
+                alt_text: latest_comic.alt,
+                transcript: latest_comic.transcript,
                 img: latest_comic.img,
                 year: latest_comic.year.parse::<i32>().unwrap(),
                 month: latest_comic.month.parse::<i32>().unwrap(),
