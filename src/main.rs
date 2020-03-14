@@ -89,6 +89,25 @@ async fn transcript(req: HttpRequest) -> impl Responder {
     }
 }
 
+async fn search(req: HttpRequest) -> impl Responder {
+    match req.match_info().get("query") {
+        Some(query) => {
+            let mut matching_scs = sqlite_chef::get_search_comics();
+            matching_scs.retain(|element| element.transcript.contains(&xkcd::normalize(&query)) || 
+                element.alt_text.contains(&xkcd::normalize(&query)) || 
+                element.transcript.contains(&xkcd::normalize(&query)));
+            let mut ids: Vec<i32> = Vec::<i32>::new();
+            for scomic in matching_scs {
+                ids.push(scomic.num);
+            }
+            HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(sqlite_chef::get_comics_by_ids(ids))
+        },
+        None => {
+            HttpResponse::BadRequest().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"Could not parse query\"}")
+        }
+    }
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     sqlite_chef::ensure_tables();
@@ -125,6 +144,7 @@ async fn main() -> std::io::Result<()> {
             .route("/title/{query}", web::get().to(title))
             .route("/alt/{query}", web::get().to(alt))
             .route("/transcript/{query}", web::get().to(transcript))
+            .route("/search/{query}", web::get().to(search))
     })
     .bind("127.0.0.1:8888")?
     .run()
