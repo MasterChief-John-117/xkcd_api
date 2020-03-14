@@ -23,8 +23,13 @@ async fn main() -> std::io::Result<()> {
             println!("Latest Stored Comic: {}", latest_stored_comic_id);
 
             if latest_stored_comic_id < latest_comic_id {
-                for next_id in latest_stored_comic_id..latest_comic_id {
+                for next_id in (latest_stored_comic_id+1)..latest_comic_id {
                     println!("Fetching {}", next_id);
+                    let next_comic: xkcd::Comic = xkcd::get_by_id(next_id);
+                    println!("{:?}", next_comic);
+                    sqlite_chef::insert_comic(next_comic);
+                    println!("Inserted {}", next_id);
+                    thread::sleep(Duration::from_secs(1)); // Wait a second so we don't hammer xkcd
                 }
             }
             // After running the update, sleep for 30 seconds
