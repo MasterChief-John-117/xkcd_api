@@ -24,6 +24,14 @@ pub fn get_latest()  -> i32 {
     return 0;
 }
 
+pub fn insert_comic(comic: xkcd::Comic) {
+    let connection = sqlite::open("./test.db").unwrap();
+    let _res = connection.execute(
+        format!("INSERT INTO comics VALUES ({num}, {title}, {alt_text}, {transcript}, {img}, {year}, {month}, {day})", 
+        num=comic.num, title=comic.title, alt_text=comic.alt_text, transcript=comic.alt_text, img=comic.img, year=comic.year, month=comic.month, day=comic.day)
+    );
+}
+
 pub fn ensure_tables() {
     let connection = sqlite::open("./test.db").unwrap();
 
