@@ -11,15 +11,20 @@ async fn index() -> impl Responder {
 async fn id(req: HttpRequest) -> impl Responder {
     match req.match_info().get("id") {
         Some(id_str) => {
-            match id_str.parse::<i32>() {
+            match id_str.parse::<i64>() {
                 Ok(request_id) => {
-                    if request_id > sqlite_chef::get_latest_id() {
+                    if request_id > sqlite_chef::get_latest_id().into() {
                         HttpResponse::NotFound().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"id higher than existing xkcd comics\"}")
                     }
                     else {
-                        let mut matching = sqlite_chef::get_all_comics();
-                        matching.retain(|element| element.num == request_id);
-                        HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(matching)                    
+                        match sqlite_chef::get_comic_by_id(request_id) {
+                            Some(comic) => {
+                                HttpResponse::Ok().header(http::header::CONTENT_TYPE, "application/json").json(comic)
+                            },
+                            None => {
+                                HttpResponse::NotFound().header(http::header::CONTENT_TYPE, "application/json").body("{\"error\": \"id not found\"}")
+                            }
+                        }
                     }
                 },
                 Err(_) => {

@@ -56,6 +56,69 @@ pub fn get_all_comics() -> Vec<xkcd::Comic> {
     return comics;
 }
 
+pub fn get_comic_by_id(num : i64) -> Option<xkcd::Comic> {
+    let connection = sqlite::open("./xkcd.db").unwrap();
+    let mut statement = match connection.prepare("SELECT * FROM comics WHERE num = ?") {
+        Ok(obj) => obj,
+        Err(_) => {
+            return None;
+        }
+    };
+    
+    match statement.bind(1, num) {
+        Ok(_) => (),
+        Err(_) => {
+            return None;
+        }
+    }
+    
+    while let State::Row = statement.next().unwrap() {
+        return Some(xkcd::Comic {
+            num: statement.read::<i64>(0).unwrap().try_into().unwrap(),
+            title: statement.read(1).unwrap(),
+            alt_text: statement.read(2).unwrap(),
+            transcript: statement.read(3).unwrap(),
+            img: statement.read(4).unwrap(),
+            year: statement.read::<i64>(5).unwrap().try_into().unwrap(),
+            month: statement.read::<i64>(6).unwrap().try_into().unwrap(),
+            day: statement.read::<i64>(7).unwrap().try_into().unwrap(),
+        })
+    }
+    return None;
+}
+
+pub fn get_comics_by_ids(nums : Vec<i32>) -> Vec<xkcd::Comic> {
+    let mut comics: Vec<xkcd::Comic> = Vec::<xkcd::Comic>::new();
+    let connection = sqlite::open("./xkcd.db").unwrap();
+    let mut statement = match connection.prepare("SELECT * FROM comics WHERE num IN (?)") {
+        Ok(obj) => obj,
+        Err(_) => {
+            return comics;
+        }
+    };
+    
+    match statement.bind(1, "1") {
+        Ok(_) => (),
+        Err(_) => {
+            return comics;
+        }
+    }
+    
+    while let State::Row = statement.next().unwrap() {
+        comics.push(xkcd::Comic {
+            num: statement.read::<i64>(0).unwrap().try_into().unwrap(),
+            title: statement.read(1).unwrap(),
+            alt_text: statement.read(2).unwrap(),
+            transcript: statement.read(3).unwrap(),
+            img: statement.read(4).unwrap(),
+            year: statement.read::<i64>(5).unwrap().try_into().unwrap(),
+            month: statement.read::<i64>(6).unwrap().try_into().unwrap(),
+            day: statement.read::<i64>(7).unwrap().try_into().unwrap(),
+        })
+    }
+    return comics;
+}
+
 pub fn get_search_comics() -> Vec<xkcd::SearchComic> {
     let mut comics: Vec<xkcd::SearchComic> = Vec::<xkcd::SearchComic>::new();
     let connection = sqlite::open("./xkcd.db").unwrap();
