@@ -5,7 +5,7 @@ Allow searching xkcd comics by title, alt text, or transcript
 
 ### Endpoints
 * `/` should return info about the latest comic
-* `/:id` should return info about a comic by ID, or an HTTP 404 response if the ID is not found
+* `/id/:id` should return info about a comic by ID, or an HTTP 404 response if the ID is not found
 * `/title/:query` should normalize the query input and return all comics with a title that match the query
 * `/alt/:query` should normalize the query input and return all comics with an alt text that match the query
 * `/transcript/:query` should normalize the query input and return all comics with a transcript that match the query

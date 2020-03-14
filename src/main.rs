@@ -66,7 +66,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(index))
-            .route("/{id}", web::get().to(id))
+            .route("/id/{id}", web::get().to(id))
     })
     .bind("127.0.0.1:8888")?
     .run()
