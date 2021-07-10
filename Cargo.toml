@@ -1,5 +1,5 @@
 [package]
-name = "xkcd_api"
+name = "xkcd"
 version = "0.1.0"
 authors = ["Galen G <git@galenguyer.com>"]
 edition = "2018"
